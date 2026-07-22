@@ -19,6 +19,7 @@
     THIS SOFTWARE.
 */
 #include "mcc_generated_files/system/system.h"
+#include "mcc_generated_files/system/pins.h"
 /*
     Main application
 */
@@ -29,5 +30,6 @@ int main(void)
 
     while(1)
     {
+        LED0_SetLow();
     }    
 }
