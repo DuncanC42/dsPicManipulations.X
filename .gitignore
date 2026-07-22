@@ -1,0 +1,24 @@
+# ---- MPLAB X / MCC Melody build output ----
+/build/
+/dist/
+/debug/
+
+# IDE incremental-build fingerprint cache (regenerated automatically at each build)
+/.generated_files/
+
+# Per-machine IDE state — do NOT ignore nbproject/configurations.xml or
+# nbproject/project.xml themselves, MPLAB X needs them to reopen the project.
+# Only "private/" is truly machine-specific.
+nbproject/private/
+
+# MCC Melody manifests (rewritten on every "Generate", not meaningful to track)
+mcc-manifest-autosave.yml
+mcc-manifest-generated-success.yml
+
+# JetBrains-family IDE metadata (unrelated to the MPLAB X project itself)
+.idea/
+
+# OS / editor cruft
+*~
+.DS_Store
+Thumbs.db
