@@ -20,6 +20,9 @@
 */
 #include "mcc_generated_files/system/system.h"
 #include "mcc_generated_files/system/pins.h"
+#include "ssd1306.h"
+#define FCY 100000000UL
+#include <libpic30.h>
 /*
     Main application
 */
@@ -27,9 +30,14 @@
 int main(void)
 {
     SYSTEM_Initialize();
+    SSD1306_Init();
+    SSD1306_Clear();
 
-    while(1)
+    SSD1306_SelectPage(0);
+    SSD1306_WriteString("Hello world !");
+
+    while (1)
     {
-        LED0_SetLow();
-    }    
+        // nothing to do here
+    }
 }

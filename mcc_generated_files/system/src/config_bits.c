@@ -93,7 +93,7 @@
 #pragma config DMTDIS = OFF    //Dead Man Timer Disable bit->Dead Man Timer is Disabled and can be enabled by software
 
 // FDEVOPT
-#pragma config ALTI2C1 = OFF    //Alternate I2C1 Pin bit->I2C1 mapped to SDA1/SCL1 pins
+#pragma config ALTI2C1 = ON    //Alternate I2C1 Pin bit->I2C1 mapped to ASDA1/ASCL1 pins
 #pragma config SMB3EN = SMBUS3    //SM Bus Enable->SMBus 3.0 input levels
 #pragma config SPI2PIN = PPS    //SPI2 Pin Select bit->SPI2 uses I/O remap (PPS) pins
 
