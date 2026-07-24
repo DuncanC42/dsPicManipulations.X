@@ -57,7 +57,7 @@ void PINS_Initialize(void)
      * Setting the GPIO Direction SFR(s)
      ***************************************************************************/
     TRISA = 0x001FU;
-    TRISB = 0xFFFFU;
+    TRISB = 0xFC7FU;
     TRISC = 0x3FFFU;
     TRISD = 0x2502U;
 
@@ -88,7 +88,7 @@ void PINS_Initialize(void)
      * Setting the Analog/Digital Configuration SFR(s)
      ***************************************************************************/
     ANSELA = 0x001FU;
-    ANSELB = 0x009FU;
+    ANSELB = 0x001FU;
     ANSELC = 0x00CFU;
     ANSELD = 0x2400U;
 
