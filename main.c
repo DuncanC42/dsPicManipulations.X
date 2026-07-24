@@ -21,91 +21,135 @@
 #include "mcc_generated_files/system/system.h"
 #include "mcc_generated_files/system/pins.h"
 #include "mcc_generated_files/i2c_host/i2c1.h"
+#include "mcc_generated_files/uart/uart1.h"
 #include "i2c_guard.h"
 #include "ssd1306.h"
 #include <stdio.h>
-#include <stdbool.h>
+#include <string.h>
 #define FCY 100000000UL
 #include <libpic30.h>
+
 /*
     Main application
 */
-
+/* ---------- VCNL4200 proximity sensor ---------- */
 #define VCNL4200_ADDR     0x51
-#define VCNL4200_PS_CONF  0x03
-#define VCNL4200_PS_DATA  0x08
-
-#define VCNL_PS_LIMIT  4095u
-
-#define TH_GREEN   (VCNL_PS_LIMIT * 1u / 4u)         /* 25 % */
-#define TH_YELLOW  (VCNL_PS_LIMIT * 3u / 4u)    /* 50 % */
-
+#define VCNL4200_PS_CONF  0x03   /* command code: PS_CONF1 (low) + PS_CONF2 (high) */
+#define VCNL4200_PS_DATA  0x08   /* command code: proximity output, 16-bit, LSB first */
+ 
+/* ---------- Timing ---------- */
+#define SEND_PERIOD_MS    250    /* how often the board pushes a reading out */
+#define LOOP_DELAY_MS     10     /* keeps RX polling responsive between sends */
+ 
+/* ---------- OLED ---------- */
+#define LINE_WIDTH        20     /* line capacity in this font, ~20 chars */
+ 
 static void VCNL4200_Init(void)
 {
-    uint8_t cfg[3] = { VCNL4200_PS_CONF, 0x08, 0x00 };   /* PS_SD=0 -> capteur actif */
+    /* PS_CONF1 = 0x08 : PS_SD = 0 (sensor active), 8T integration time
+       PS_CONF2 = 0x00 : 12-bit output (0-4095), interrupt disabled (we poll) */
+    uint8_t cfg[3] = { VCNL4200_PS_CONF, 0x08, 0x00 };
     if (!I2C_WaitIdle()) { return; }
     I2C1_Write(VCNL4200_ADDR, cfg, sizeof(cfg));
     (void)I2C_WaitIdle();
 }
-
+ 
 static uint16_t VCNL4200_ReadReg(uint8_t reg)
 {
-    uint8_t rx[2] = {0, 0};
+    uint8_t rx[2] = { 0, 0 };
     if (!I2C_WaitIdle()) { return 0; }
-    I2C1_WriteRead(VCNL4200_ADDR, &reg, 1, rx, 2);   /* repeated start */
+    I2C1_WriteRead(VCNL4200_ADDR, &reg, 1, rx, 2);   /* repeated start is mandatory here */
     (void)I2C_WaitIdle();
-    return (uint16_t)(rx[0] | ((uint16_t)rx[1] << 8));   /* LSB d'abord */
+    return (uint16_t)(rx[0] | ((uint16_t)rx[1] << 8));   /* LSB first */
 }
-
-static void RGB_Manager(bool r, bool g, bool b){
-    if(r) {
-        LED_R_SetHigh();
-    }
-    else {
-        LED_R_SetLow();
-    }
-    
-    if (g){
-        LED_G_SetHigh();
-    }
-    else {
-        LED_G_SetLow();
-    }
-    
-    if(b){
-        LED_B_SetHigh();
-    }
-    else {
-        LED_B_SetLow();
+ 
+/* ---------- UART ---------- */
+static void UART_SendString(const char *s)
+{
+    while (*s != '\0')
+    {
+        while (!UART1_IsTxReady()) { }
+        UART1_Write((uint8_t)*s++);
     }
 }
-
+ 
+/* ---------- OLED ---------- */
+static void OLED_ShowLine(uint8_t page, const char *text, uint8_t len)
+{
+    char line[LINE_WIDTH + 1];
+    uint8_t i = 0;
+ 
+    for (; i < len && i < LINE_WIDTH; i++) { line[i] = text[i]; }
+    for (; i < LINE_WIDTH; i++)            { line[i] = ' '; }   /* clear any longer previous line */
+    line[LINE_WIDTH] = '\0';
+ 
+    SSD1306_SelectPage(page);
+    SSD1306_WriteString(line);
+}
+ 
+/* ---------- Main ---------- */
 int main(void)
 {
+    char     rxBuffer[LINE_WIDTH + 1];
+    uint8_t  rxIdx      = 0;
+    uint16_t elapsedMs  = 0;
+ 
     SYSTEM_Initialize();
     SSD1306_Init();
     SSD1306_Clear();
     VCNL4200_Init();
-
+ 
+    OLED_ShowLine(0, "PROX: ---", 9);
+    OLED_ShowLine(2, "MSG: (none yet)", 15);
+    UART_SendString("Board ready. Streaming proximity readings.\r\n");
+    UART_SendString("Type a line and press Enter to show it on screen.\r\n");
+ 
     while (1)
     {
-        uint16_t prox = VCNL4200_ReadReg(VCNL4200_PS_DATA);
-
-        char buffer[16];
-        sprintf(buffer, "PROX: %4u   ", prox);
-        SSD1306_SelectPage(0);
-        SSD1306_WriteString(buffer);
-        
-        if(prox < TH_GREEN){
-            RGB_Manager(0,1,0);
+        /* ---- direction 1: board -> PC, unsolicited, on a timer ---- */
+        elapsedMs += LOOP_DELAY_MS;
+        if (elapsedMs >= SEND_PERIOD_MS)
+        {
+            elapsedMs = 0;
+            uint16_t prox = VCNL4200_ReadReg(VCNL4200_PS_DATA);
+ 
+            char msg[24];
+            sprintf(msg, "PROX: %4u\r\n", prox);
+            UART_SendString(msg);
+ 
+            char oledMsg[16];
+            sprintf(oledMsg, "PROX: %4u", prox);
+            OLED_ShowLine(0, oledMsg, (uint8_t)strlen(oledMsg));
         }
-        else if (TH_GREEN < prox && prox < TH_YELLOW){
-            RGB_Manager(1,1,0);
+ 
+        /* ---- direction 2: PC -> board, whenever it happens to arrive ---- */
+        if (UART1_IsRxReady())
+        {
+            uint8_t c = UART1_Read();
+ 
+            while (!UART1_IsTxReady()) { }   /* local echo: screen has none by default */
+            UART1_Write(c);
+ 
+            if (c == '\r' || c == '\n')
+            {
+                if (rxIdx > 0)
+                {
+                    OLED_ShowLine(2, rxBuffer, rxIdx);
+                    UART_SendString("\r\n[shown on screen]\r\n");
+                    rxIdx = 0;
+                }
+            }
+            else if (rxIdx < LINE_WIDTH)
+            {
+                rxBuffer[rxIdx++] = (char)c;
+            }
+            else
+            {
+                UART_SendString("\r\n[line too long for the screen]\r\n");
+                rxIdx = 0;
+            }
         }
-        else {
-            RGB_Manager(1,0,0);
-        }
-
-        __delay_ms(50);
+ 
+        __delay_ms(LOOP_DELAY_MS);
     }
 }

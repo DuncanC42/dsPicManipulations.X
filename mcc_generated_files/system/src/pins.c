@@ -50,7 +50,7 @@ void PINS_Initialize(void)
      ***************************************************************************/
     LATA = 0x0000U;
     LATB = 0x0000U;
-    LATC = 0x0000U;
+    LATC = 0x0400U;
     LATD = 0x0000U;
 
     /****************************************************************************
@@ -58,7 +58,7 @@ void PINS_Initialize(void)
      ***************************************************************************/
     TRISA = 0x001FU;
     TRISB = 0xFC7FU;
-    TRISC = 0x3FFFU;
+    TRISC = 0x3BFFU;
     TRISD = 0x2502U;
 
 
@@ -91,6 +91,17 @@ void PINS_Initialize(void)
     ANSELB = 0x001FU;
     ANSELC = 0x00CFU;
     ANSELD = 0x2400U;
+
+    /****************************************************************************
+     * Set the PPS
+     ***************************************************************************/
+     __builtin_write_RPCON(0x0000); // unlock PPS
+
+        RPINR18bits.U1RXR = 0x003BU; //RC11->UART1:U1RX;
+        RPOR13bits.RP58R = 0x0001U;  //RC10->UART1:U1TX;
+
+     __builtin_write_RPCON(0x0800); // lock PPS
+
 
 }
 
