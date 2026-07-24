@@ -20,32 +20,50 @@
 */
 #include "mcc_generated_files/system/system.h"
 #include "mcc_generated_files/system/pins.h"
-#include "mcc_generated_files/adc/adc1.h"
-#include <stdio.h>
+#include "mcc_generated_files/i2c_host/i2c1.h"
+#include "i2c_guard.h"
 #include "ssd1306.h"
+#include <stdio.h>
 #define FCY 100000000UL
-// if resolution is 12 => pot_limit = 2^12 = 4095
-#define POT_LIMIT ((1u << ADC1_RESOLUTION) - 1u)
 #include <libpic30.h>
 /*
     Main application
 */
 
+#define VCNL4200_ADDR     0x51
+#define VCNL4200_PS_CONF  0x03
+#define VCNL4200_PS_DATA  0x08
+
+static void VCNL4200_Init(void)
+{
+    uint8_t cfg[3] = { VCNL4200_PS_CONF, 0x08, 0x00 };   /* PS_SD=0 -> capteur actif */
+    if (!I2C_WaitIdle()) { return; }
+    I2C1_Write(VCNL4200_ADDR, cfg, sizeof(cfg));
+    (void)I2C_WaitIdle();
+}
+
+static uint16_t VCNL4200_ReadReg(uint8_t reg)
+{
+    uint8_t rx[2] = {0, 0};
+    if (!I2C_WaitIdle()) { return 0; }
+    I2C1_WriteRead(VCNL4200_ADDR, &reg, 1, rx, 2);   /* repeated start */
+    (void)I2C_WaitIdle();
+    return (uint16_t)(rx[0] | ((uint16_t)rx[1] << 8));   /* LSB d'abord */
+}
+
 int main(void)
 {
     SYSTEM_Initialize();
-    ADC1_Enable();
     SSD1306_Init();
     SSD1306_Clear();
+    VCNL4200_Init();
 
     while (1)
     {
-        ADC1_SoftwareTriggerEnable();
-        __delay_us(50);                      
-        uint16_t adcValue = ADC1_ConversionResultGet(POT);
+        uint16_t prox = VCNL4200_ReadReg(VCNL4200_PS_DATA);
 
         char buffer[16];
-        sprintf(buffer, "POT: %4u/%4u", adcValue, POT_LIMIT);
+        sprintf(buffer, "PROX: %4u   ", prox);
         SSD1306_SelectPage(0);
         SSD1306_WriteString(buffer);
 
