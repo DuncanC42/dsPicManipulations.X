@@ -20,8 +20,12 @@
 */
 #include "mcc_generated_files/system/system.h"
 #include "mcc_generated_files/system/pins.h"
+#include "mcc_generated_files/adc/adc1.h"
+#include <stdio.h>
 #include "ssd1306.h"
 #define FCY 100000000UL
+// if resolution is 12 => pot_limit = 2^12 = 4095
+#define POT_LIMIT ((1u << ADC1_RESOLUTION) - 1u)
 #include <libpic30.h>
 /*
     Main application
@@ -30,14 +34,21 @@
 int main(void)
 {
     SYSTEM_Initialize();
+    ADC1_Enable();
     SSD1306_Init();
     SSD1306_Clear();
 
-    SSD1306_SelectPage(0);
-    SSD1306_WriteString("Hello world !");
-
     while (1)
     {
-        // nothing to do here
+        ADC1_SoftwareTriggerEnable();
+        __delay_us(50);                      
+        uint16_t adcValue = ADC1_ConversionResultGet(POT);
+
+        char buffer[16];
+        sprintf(buffer, "POT: %4u/%4u", adcValue, POT_LIMIT);
+        SSD1306_SelectPage(0);
+        SSD1306_WriteString(buffer);
+
+        __delay_ms(50);
     }
 }
