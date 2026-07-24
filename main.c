@@ -24,6 +24,7 @@
 #include "i2c_guard.h"
 #include "ssd1306.h"
 #include <stdio.h>
+#include <stdbool.h>
 #define FCY 100000000UL
 #include <libpic30.h>
 /*
@@ -33,6 +34,11 @@
 #define VCNL4200_ADDR     0x51
 #define VCNL4200_PS_CONF  0x03
 #define VCNL4200_PS_DATA  0x08
+
+#define VCNL_PS_LIMIT  4095u
+
+#define TH_GREEN   (VCNL_PS_LIMIT * 1u / 4u)         /* 25 % */
+#define TH_YELLOW  (VCNL_PS_LIMIT * 3u / 4u)    /* 50 % */
 
 static void VCNL4200_Init(void)
 {
@@ -51,6 +57,29 @@ static uint16_t VCNL4200_ReadReg(uint8_t reg)
     return (uint16_t)(rx[0] | ((uint16_t)rx[1] << 8));   /* LSB d'abord */
 }
 
+static void RGB_Manager(bool r, bool g, bool b){
+    if(r) {
+        LED_R_SetHigh();
+    }
+    else {
+        LED_R_SetLow();
+    }
+    
+    if (g){
+        LED_G_SetHigh();
+    }
+    else {
+        LED_G_SetLow();
+    }
+    
+    if(b){
+        LED_B_SetHigh();
+    }
+    else {
+        LED_B_SetLow();
+    }
+}
+
 int main(void)
 {
     SYSTEM_Initialize();
@@ -66,6 +95,16 @@ int main(void)
         sprintf(buffer, "PROX: %4u   ", prox);
         SSD1306_SelectPage(0);
         SSD1306_WriteString(buffer);
+        
+        if(prox < TH_GREEN){
+            RGB_Manager(0,1,0);
+        }
+        else if (TH_GREEN < prox && prox < TH_YELLOW){
+            RGB_Manager(1,1,0);
+        }
+        else {
+            RGB_Manager(1,0,0);
+        }
 
         __delay_ms(50);
     }

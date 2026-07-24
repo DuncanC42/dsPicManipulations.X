@@ -34,7 +34,6 @@
 #include "../system_types.h"
 #include "../clock.h"
 #include "../pins.h"
-#include "../../adc/adc1.h"
 #include "../dmt.h"
 #include "../../i2c_host/i2c1.h"
 #include "../interrupt.h"
@@ -44,7 +43,6 @@ void SYSTEM_Initialize(void)
 {
     CLOCK_Initialize();
     PINS_Initialize();
-    ADC1_Initialize();
     DMT_Initialize();
     I2C1_Initialize();
     INTERRUPT_GlobalEnable();
