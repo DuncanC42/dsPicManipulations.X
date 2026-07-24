@@ -45,6 +45,57 @@
 
 /**
  * @ingroup  pinsdriver
+ * @brief    Sets the RC4 GPIO Pin which has a custom name of LED0 to High
+ * @pre      The RC4 must be set as Output Pin             
+ * @param    none
+ * @return   none  
+ */
+#define LED0_SetHigh()          (_LATC4 = 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Sets the RC4 GPIO Pin which has a custom name of LED0 to Low
+ * @pre      The RC4 must be set as Output Pin
+ * @param    none
+ * @return   none  
+ */
+#define LED0_SetLow()           (_LATC4 = 0)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Toggles the RC4 GPIO Pin which has a custom name of LED0
+ * @pre      The RC4 must be set as Output Pin
+ * @param    none
+ * @return   none  
+ */
+#define LED0_Toggle()           (_LATC4 ^= 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Reads the value of the RC4 GPIO Pin which has a custom name of LED0
+ * @param    none
+ * @return   none  
+ */
+#define LED0_GetValue()         _RC4
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Configures the RC4 GPIO Pin which has a custom name of LED0 as Input
+ * @param    none
+ * @return   none  
+ */
+#define LED0_SetDigitalInput()  (_TRISC4 = 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Configures the RC4 GPIO Pin which has a custom name of LED0 as Output
+ * @param    none
+ * @return   none  
+ */
+#define LED0_SetDigitalOutput() (_TRISC4 = 0)
+
+/**
+ * @ingroup  pinsdriver
  * @brief    Initializes the PINS module
  * @param    none
  * @return   none  
