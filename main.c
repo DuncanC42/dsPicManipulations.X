@@ -32,35 +32,37 @@
 /*
     Main application
 */
-/* ---------- VCNL4200 proximity sensor ---------- */
-#define VCNL4200_ADDR     0x51
-#define VCNL4200_PS_CONF  0x03   /* command code: PS_CONF1 (low) + PS_CONF2 (high) */
-#define VCNL4200_PS_DATA  0x08   /* command code: proximity output, 16-bit, LSB first */
- 
+
 /* ---------- Timing ---------- */
 #define SEND_PERIOD_MS    250    /* how often the board pushes a reading out */
 #define LOOP_DELAY_MS     10     /* keeps RX polling responsive between sends */
- 
-/* ---------- OLED ---------- */
-#define LINE_WIDTH        20     /* line capacity in this font, ~20 chars */
- 
-static void VCNL4200_Init(void)
-{
-    /* PS_CONF1 = 0x08 : PS_SD = 0 (sensor active), 8T integration time
-       PS_CONF2 = 0x00 : 12-bit output (0-4095), interrupt disabled (we poll) */
-    uint8_t cfg[3] = { VCNL4200_PS_CONF, 0x08, 0x00 };
-    if (!I2C_WaitIdle()) { return; }
-    I2C1_Write(VCNL4200_ADDR, cfg, sizeof(cfg));
-    (void)I2C_WaitIdle();
-}
- 
-static uint16_t VCNL4200_ReadReg(uint8_t reg)
+
+
+#define MCP9808_ADDR    0x1C
+#define MCP9808_REG_TA  0x05   /* Ambient Temperature, read-only, 16-bit, MSB first */
+
+#define MCP9808_REG_MFG_ID  0x06   /* Manufacturer ID, read-only, expected 0x0054 */
+
+static uint16_t MCP9808_ReadReg(uint8_t reg)
 {
     uint8_t rx[2] = { 0, 0 };
-    if (!I2C_WaitIdle()) { return 0; }
-    I2C1_WriteRead(VCNL4200_ADDR, &reg, 1, rx, 2);   /* repeated start is mandatory here */
-    (void)I2C_WaitIdle();
-    return (uint16_t)(rx[0] | ((uint16_t)rx[1] << 8));   /* LSB first */
+    if (!I2C_WaitIdle()) { return 0xFFFF; }
+    I2C1_WriteRead(MCP9808_ADDR, &reg, 1, rx, 2);
+    if (!I2C_WaitIdle()) { return 0xFFFF; }
+    if (I2C1_ErrorGet() != I2C_HOST_ERROR_NONE) { return 0xFFFF; }   /* personne n'a repondu a 0x1C */
+    return (uint16_t)(((uint16_t)rx[0] << 8) | rx[1]);
+}
+
+static int16_t MCP9808_ToCentiCelsius(uint16_t raw)
+{
+    uint8_t upper = (uint8_t)((raw >> 8) & 0x1F);
+    int16_t value = (int16_t)(((uint16_t)upper << 8) | (raw & 0xFF));
+
+    if (value & 0x1000) { value -= 0x2000; }
+
+    /* value*100 peut depasser 32767 (int 16 bits) pour des temperatures
+       normales -> multiplier en 32 bits avant de diviser */
+    return (int16_t)(((int32_t)value * 100) / 16);
 }
  
 /* ---------- UART ---------- */
@@ -73,37 +75,23 @@ static void UART_SendString(const char *s)
     }
 }
  
-/* ---------- OLED ---------- */
-static void OLED_ShowLine(uint8_t page, const char *text, uint8_t len)
-{
-    char line[LINE_WIDTH + 1];
-    uint8_t i = 0;
- 
-    for (; i < len && i < LINE_WIDTH; i++) { line[i] = text[i]; }
-    for (; i < LINE_WIDTH; i++)            { line[i] = ' '; }   /* clear any longer previous line */
-    line[LINE_WIDTH] = '\0';
- 
-    SSD1306_SelectPage(page);
-    SSD1306_WriteString(line);
-}
  
 /* ---------- Main ---------- */
 int main(void)
 {
-    char     rxBuffer[LINE_WIDTH + 1];
     uint8_t  rxIdx      = 0;
     uint16_t elapsedMs  = 0;
  
     SYSTEM_Initialize();
     SSD1306_Init();
     SSD1306_Clear();
-    VCNL4200_Init();
+
  
-    OLED_ShowLine(0, "PROX: ---", 9);
-    OLED_ShowLine(2, "MSG: (none yet)", 15);
-    UART_SendString("Board ready. Streaming proximity readings.\r\n");
-    UART_SendString("Type a line and press Enter to show it on screen.\r\n");
- 
+    uint16_t mfgId = MCP9808_ReadReg(MCP9808_REG_MFG_ID);
+    char idMsg[24];
+    sprintf(idMsg, "MFG ID: 0x%04X\r\n", mfgId);
+    UART_SendString(idMsg);
+    
     while (1)
     {
         /* ---- direction 1: board -> PC, unsolicited, on a timer ---- */
@@ -111,43 +99,15 @@ int main(void)
         if (elapsedMs >= SEND_PERIOD_MS)
         {
             elapsedMs = 0;
-            uint16_t prox = VCNL4200_ReadReg(VCNL4200_PS_DATA);
- 
+            uint16_t raw   = MCP9808_ReadReg(MCP9808_REG_TA);
+            int16_t  centi = MCP9808_ToCentiCelsius(raw);
+            int16_t  whole = centi / 100;
+            int16_t  frac  = centi % 100;
+            if (frac < 0) { frac = -frac; }
+
             char msg[24];
-            sprintf(msg, "PROX: %4u\r\n", prox);
+            sprintf(msg, "TEMP: %d.%02d C\r\n", whole, frac);
             UART_SendString(msg);
- 
-            char oledMsg[16];
-            sprintf(oledMsg, "PROX: %4u", prox);
-            OLED_ShowLine(0, oledMsg, (uint8_t)strlen(oledMsg));
-        }
- 
-        /* ---- direction 2: PC -> board, whenever it happens to arrive ---- */
-        if (UART1_IsRxReady())
-        {
-            uint8_t c = UART1_Read();
- 
-            while (!UART1_IsTxReady()) { }   /* local echo: screen has none by default */
-            UART1_Write(c);
- 
-            if (c == '\r' || c == '\n')
-            {
-                if (rxIdx > 0)
-                {
-                    OLED_ShowLine(2, rxBuffer, rxIdx);
-                    UART_SendString("\r\n[shown on screen]\r\n");
-                    rxIdx = 0;
-                }
-            }
-            else if (rxIdx < LINE_WIDTH)
-            {
-                rxBuffer[rxIdx++] = (char)c;
-            }
-            else
-            {
-                UART_SendString("\r\n[line too long for the screen]\r\n");
-                rxIdx = 0;
-            }
         }
  
         __delay_ms(LOOP_DELAY_MS);
