@@ -18,6 +18,18 @@
     EXCEED AMOUNT OF FEES, IF ANY, YOU PAID DIRECTLY TO MICROCHIP FOR 
     THIS SOFTWARE.
 */
+/*
+ * 07_MCP9808_app -- reads the on-board MCP9808 temperature sensor and
+ * streams it to the PC over UART, mirrored on the OLED.
+ * dsPIC33CK64MC105 Curiosity Nano + Nano Explorer, MCC Melody, XC16
+ *
+ * Required MCC modules:
+ *   - I2C1_Host : SCL1 -> RC9, SDA1 -> RC8   (sensor + OLED share this bus)
+ *   - UART1     : U1TX -> RC10, U1RX -> RC11, 115200 8N1, polling (no ISR)
+ *
+ * PC side: screen /dev/ttyACM0 115200 (or any 115200 8N1 terminal)
+ */
+
 #include "mcc_generated_files/system/system.h"
 #include "mcc_generated_files/system/pins.h"
 #include "mcc_generated_files/i2c_host/i2c1.h"
@@ -29,19 +41,17 @@
 #define FCY 100000000UL
 #include <libpic30.h>
 
-/*
-    Main application
-*/
+/* ---------- MCP9808 temperature sensor ---------- */
+#define MCP9808_ADDR        0x1C
+#define MCP9808_REG_TA      0x05   /* Ambient Temperature, read-only, 16-bit, MSB first */
+#define MCP9808_REG_MFG_ID  0x06   /* Manufacturer ID, read-only, expected 0x0054 */
 
 /* ---------- Timing ---------- */
 #define SEND_PERIOD_MS    250    /* how often the board pushes a reading out */
-#define LOOP_DELAY_MS     10     /* keeps RX polling responsive between sends */
+#define LOOP_DELAY_MS     10     /* keeps the loop responsive */
 
-
-#define MCP9808_ADDR    0x1C
-#define MCP9808_REG_TA  0x05   /* Ambient Temperature, read-only, 16-bit, MSB first */
-
-#define MCP9808_REG_MFG_ID  0x06   /* Manufacturer ID, read-only, expected 0x0054 */
+/* ---------- OLED ---------- */
+#define LINE_WIDTH        20     /* line capacity in this font, ~20 chars */
 
 static uint16_t MCP9808_ReadReg(uint8_t reg)
 {
@@ -49,22 +59,25 @@ static uint16_t MCP9808_ReadReg(uint8_t reg)
     if (!I2C_WaitIdle()) { return 0xFFFF; }
     I2C1_WriteRead(MCP9808_ADDR, &reg, 1, rx, 2);
     if (!I2C_WaitIdle()) { return 0xFFFF; }
-    if (I2C1_ErrorGet() != I2C_HOST_ERROR_NONE) { return 0xFFFF; }   /* personne n'a repondu a 0x1C */
+    if (I2C1_ErrorGet() != I2C_HOST_ERROR_NONE) { return 0xFFFF; }   /* no reply from 0x1C */
     return (uint16_t)(((uint16_t)rx[0] << 8) | rx[1]);
 }
 
+/* Raw Ta register -> hundredths of a degree C (2537 means 25.37 C).
+   Bits 15-13 are alert flags (masked off), bits 12-0 are a 13-bit
+   two's complement value in units of 1/16 C. */
 static int16_t MCP9808_ToCentiCelsius(uint16_t raw)
 {
     uint8_t upper = (uint8_t)((raw >> 8) & 0x1F);
     int16_t value = (int16_t)(((uint16_t)upper << 8) | (raw & 0xFF));
 
-    if (value & 0x1000) { value -= 0x2000; }
+    if (value & 0x1000) { value -= 0x2000; }   /* sign-extend the 13-bit value */
 
-    /* value*100 peut depasser 32767 (int 16 bits) pour des temperatures
-       normales -> multiplier en 32 bits avant de diviser */
+    /* value*100 can exceed 32767 (16-bit int on this platform) for normal
+       room temperatures -> widen to 32-bit before multiplying */
     return (int16_t)(((int32_t)value * 100) / 16);
 }
- 
+
 /* ---------- UART ---------- */
 static void UART_SendString(const char *s)
 {
@@ -74,31 +87,49 @@ static void UART_SendString(const char *s)
         UART1_Write((uint8_t)*s++);
     }
 }
- 
- 
+
+/* ---------- OLED ---------- */
+static void OLED_ShowLine(uint8_t page, const char *text, uint8_t len)
+{
+    char line[LINE_WIDTH + 1];
+    uint8_t i = 0;
+
+    for (; i < len && i < LINE_WIDTH; i++) { line[i] = text[i]; }
+    for (; i < LINE_WIDTH; i++)            { line[i] = ' '; }   /* clear any longer previous line */
+    line[LINE_WIDTH] = '\0';
+
+    SSD1306_SelectPage(page);
+    SSD1306_WriteString(line);
+}
+
 /* ---------- Main ---------- */
 int main(void)
 {
-    uint8_t  rxIdx      = 0;
-    uint16_t elapsedMs  = 0;
- 
+    uint16_t elapsedMs = 0;
+
     SYSTEM_Initialize();
     SSD1306_Init();
     SSD1306_Clear();
 
- 
+    /* Sanity check: confirms the sensor is alive before trusting its data */
     uint16_t mfgId = MCP9808_ReadReg(MCP9808_REG_MFG_ID);
+
     char idMsg[24];
     sprintf(idMsg, "MFG ID: 0x%04X\r\n", mfgId);
     UART_SendString(idMsg);
-    
+
+    char idLine[16];
+    sprintf(idLine, "ID: 0x%04X", mfgId);
+    OLED_ShowLine(0, idLine, (uint8_t)strlen(idLine));
+    __delay_ms(1000);
+
     while (1)
     {
-        /* ---- direction 1: board -> PC, unsolicited, on a timer ---- */
         elapsedMs += LOOP_DELAY_MS;
         if (elapsedMs >= SEND_PERIOD_MS)
         {
             elapsedMs = 0;
+
             uint16_t raw   = MCP9808_ReadReg(MCP9808_REG_TA);
             int16_t  centi = MCP9808_ToCentiCelsius(raw);
             int16_t  whole = centi / 100;
@@ -108,8 +139,12 @@ int main(void)
             char msg[24];
             sprintf(msg, "TEMP: %d.%02d C\r\n", whole, frac);
             UART_SendString(msg);
+
+            char oledMsg[16];
+            sprintf(oledMsg, "TEMP: %d.%02d C", whole, frac);
+            OLED_ShowLine(0, oledMsg, (uint8_t)strlen(oledMsg));
         }
- 
+
         __delay_ms(LOOP_DELAY_MS);
     }
 }
