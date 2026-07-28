@@ -1,14 +1,17 @@
 /**
- * MAIN Generated Driver Header File
+ * I2C Generated Driver Types Header File
  * 
- * @file      system.c
- *            
- * @ingroup   systemdriver
- *            
- * @brief     This is the generated driver header file for the System driver
- *            
+ * @file      i2c_host_types.h
+ * 
+ * @ingroup   i2chostdriver
+ * 
+ * @brief     This is the generated driver types header file for the I2C driver using CCL
+ *
+ * @skipline @version   PLIB Version 2.2.6
+ *
  * @skipline  Device : dsPIC33CK64MC105
 */
+
 /*
 © [2026] Microchip Technology Inc. and its subsidiaries.
 
@@ -30,31 +33,34 @@
     THIS SOFTWARE.
 */
 
-#include "../system.h"
-#include "../system_types.h"
-#include "../clock.h"
-#include "../pins.h"
-#include "../../adc/adc1.h"
-#include "../dmt.h"
-#include "../../i2c_host/i2c1.h"
-#include "../../timer/sccp1.h"
-#include "../../spi_host/spi1.h"
-#include "../interrupt.h"
+#ifndef I2C_HOST_TYPES_H
+#define    I2C_HOST_TYPES_H
 
-
-void SYSTEM_Initialize(void)
-{
-    CLOCK_Initialize();
-    PINS_Initialize();
-    ADC1_Initialize();
-    DMT_Initialize();
-    I2C1_Initialize();
-    SCCP1_Timer_Initialize();
-    SPI1_Initialize();
-    INTERRUPT_GlobalEnable();
-    INTERRUPT_Initialize();
-}
+#include <stdint.h>
 
 /**
- End of File
+ @ingroup  i2chostdriver
+ @enum     I2C_HOST_ERROR
+ @brief    This Enum can be used to know the Host Error Status. 
+           Refer I2Cx_ErrorGet e.g. \ref I2C1_ErrorGet.
 */
+enum I2C_HOST_ERROR
+{
+    I2C_HOST_ERROR_NONE,             /**< No Error */
+    I2C_HOST_ERROR_NACK,             /**< Client returned NACK */
+    I2C_HOST_ERROR_BUS_COLLISION,    /**< Bus Collision Error */
+};
+
+/**
+ @ingroup  i2chostdriver
+ @struct   I2C_TRANSFER_SETUP
+ @brief    I2C Clock Speed (100KHZ to 1MHZ)
+*/
+struct I2C_TRANSFER_SETUP
+{
+  uint32_t clkSpeed;            ///< I2C Clock Speed
+};
+
+#endif
+
+

@@ -7,7 +7,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-//#include "mcc_generated_files/i2c_host/i2c1.h"
+#include "mcc_generated_files/i2c_host/i2c1.h"
 
 static inline bool I2C_WaitIdle(void)
 {

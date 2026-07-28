@@ -18,59 +18,44 @@
     EXCEED AMOUNT OF FEES, IF ANY, YOU PAID DIRECTLY TO MICROCHIP FOR 
     THIS SOFTWARE.
 */
-
 #include "mcc_generated_files/system/system.h"
 #include "mcc_generated_files/system/pins.h"
-#include "mcc_generated_files/spi_host/spi1.h"
-#include "mcc_generated_files/timer/sccp1.h"
-//#include "i2c_guard.h"
-//#include "ssd1306.h"
+#include "mcc_generated_files/adc/adc1.h"
+#include "i2c_guard.h"
+#include "ssd1306.h"
 #include <stdio.h>
-#include <string.h>
 #define FCY 100000000UL
 #include <libpic30.h>
 
-#define DAC_CTRL_BITS  0x3000   /* bit15=0(write) bit14=x GA=1(x1) SHDN=1(actif) */
-#define TOGGLE_TICKS   9        /* ~444 Hz, proche du La 440 */
-
-static void DAC_Write12(uint16_t value)
-{
-    uint16_t command  = DAC_CTRL_BITS | (value & 0x0FFF);
-    uint8_t  highByte = (uint8_t)(command >> 8);
-    uint8_t  lowByte  = (uint8_t)(command & 0xFF);
-
-    DAC_CS_SetLow();
-    while (!SPI1_IsTxReady()) { }
-    (void)SPI1_ByteExchange(highByte);
-    while (!SPI1_IsTxReady()) { }
-    (void)SPI1_ByteExchange(lowByte);
-    DAC_CS_SetHigh();
-}
-
-volatile uint16_t tickCount  = 0;
-volatile bool     squareHigh = false;
-
-void SampleTick(void)
-{
-    tickCount++;
-    if (tickCount >= TOGGLE_TICKS)
-    {
-        tickCount = 0;
-        squareHigh = !squareHigh;
-        DAC_Write12(squareHigh ? 4095 : 0);
-    }
-}
+#define SAMPLES_PER_WINDOW  200   /* nombre de lectures par fenetre d'observation */
 
 int main(void)
 {
     SYSTEM_Initialize();
-    SPI1_Open(HOST_CONFIG);
-
-    Timer1_TimeoutCallbackRegister(SampleTick);
-    Timer1_Start();
+    ADC1_Enable();
+    SSD1306_Init();
+    SSD1306_Clear();
 
     while (1)
     {
+        uint16_t minVal = -1;   /* valeur la plus haute en non signé (65535) */
+        uint16_t maxVal = 0; /* sera forcément remplacé à la premiere lecture */
 
+        for (uint16_t i = 0; i < SAMPLES_PER_WINDOW; i++)
+        {
+            ADC1_SoftwareTriggerEnable();
+            __delay_us(50);
+            uint16_t sample = ADC1_ConversionResultGet(MIC_OUT);
+
+            if (sample < minVal) { minVal = sample; }
+            if (sample > maxVal) { maxVal = sample; }
+        }
+
+        uint16_t swing = maxVal - minVal ;   /* le niveau qui nous interesse vraiment */
+
+        char buffer[16];
+        sprintf(buffer, "MIC: %4u   ", swing);
+        SSD1306_SelectPage(0);
+        SSD1306_WriteString(buffer);
     }
 }

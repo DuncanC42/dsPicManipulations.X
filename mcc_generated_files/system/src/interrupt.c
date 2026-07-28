@@ -47,6 +47,14 @@ void INTERRUPT_Initialize(void)
     // Priority: 1
     IPC11bits.DMTIP = 1;
     
+    // I2C1BC: I2C1 Bus Collision
+    // Priority: 1
+    IPC16bits.I2C1BCIP = 1;
+    
+    // MI2C1: I2C1 Master Event
+    // Priority: 1
+    IPC4bits.MI2C1IP = 1;
+    
     // CCT1: CCP1 Timer Event
     // Priority: 1
     IPC1bits.CCT1IP = 1;
@@ -57,5 +65,7 @@ void INTERRUPT_Deinitialize(void)
 {
     //POR default value of priority
     IPC11bits.DMTIP = 4;
+    IPC16bits.I2C1BCIP = 4;
+    IPC4bits.MI2C1IP = 4;
     IPC1bits.CCT1IP = 4;
 }

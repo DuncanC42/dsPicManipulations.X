@@ -7,6 +7,17 @@
       <logicalFolder name="MCC Generated Files"
                      displayName="MCC Generated Files"
                      projectFiles="true">
+        <logicalFolder name="adc" displayName="adc" projectFiles="true">
+          <itemPath>mcc_generated_files/adc/adc_types.h</itemPath>
+          <itemPath>mcc_generated_files/adc/adc_interface.h</itemPath>
+          <itemPath>mcc_generated_files/adc/adc_features.h</itemPath>
+          <itemPath>mcc_generated_files/adc/adc1.h</itemPath>
+        </logicalFolder>
+        <logicalFolder name="i2c_host" displayName="i2c_host" projectFiles="true">
+          <itemPath>mcc_generated_files/i2c_host/i2c1.h</itemPath>
+          <itemPath>mcc_generated_files/i2c_host/i2c_host_interface.h</itemPath>
+          <itemPath>mcc_generated_files/i2c_host/i2c_host_types.h</itemPath>
+        </logicalFolder>
         <logicalFolder name="spi_host" displayName="spi_host" projectFiles="true">
           <itemPath>mcc_generated_files/spi_host/spi1.h</itemPath>
           <itemPath>mcc_generated_files/spi_host/spi_host_interface.h</itemPath>
@@ -31,6 +42,7 @@
       </logicalFolder>
       <itemPath>font.h</itemPath>
       <itemPath>i2c_guard.h</itemPath>
+      <itemPath>ssd1306_1.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -48,6 +60,16 @@
       <logicalFolder name="MCC Generated Files"
                      displayName="MCC Generated Files"
                      projectFiles="true">
+        <logicalFolder name="adc" displayName="adc" projectFiles="true">
+          <logicalFolder name="src" displayName="src" projectFiles="true">
+            <itemPath>mcc_generated_files/adc/src/adc1.c</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="i2c_host" displayName="i2c_host" projectFiles="true">
+          <logicalFolder name="src" displayName="src" projectFiles="true">
+            <itemPath>mcc_generated_files/i2c_host/src/i2c1.c</itemPath>
+          </logicalFolder>
+        </logicalFolder>
         <logicalFolder name="spi_host" displayName="spi_host" projectFiles="true">
           <logicalFolder name="src" displayName="src" projectFiles="true">
             <itemPath>mcc_generated_files/spi_host/src/spi1.c</itemPath>
@@ -74,6 +96,7 @@
         </logicalFolder>
       </logicalFolder>
       <itemPath>main.c</itemPath>
+      <itemPath>ssd1306_1.c</itemPath>
     </logicalFolder>
   </logicalFolder>
   <projectmakefile>Makefile</projectmakefile>
