@@ -19,10 +19,10 @@
     THIS SOFTWARE.
 */
 
-
 #include "mcc_generated_files/system/system.h"
 #include "mcc_generated_files/system/pins.h"
 #include "mcc_generated_files/spi_host/spi1.h"
+#include "mcc_generated_files/timer/sccp1.h"
 //#include "i2c_guard.h"
 //#include "ssd1306.h"
 #include <stdio.h>
@@ -31,6 +31,7 @@
 #include <libpic30.h>
 
 #define DAC_CTRL_BITS  0x3000   /* bit15=0(write) bit14=x GA=1(x1) SHDN=1(actif) */
+#define TOGGLE_TICKS   9        /* ~444 Hz, proche du La 440 */
 
 static void DAC_Write12(uint16_t value)
 {
@@ -46,15 +47,30 @@ static void DAC_Write12(uint16_t value)
     DAC_CS_SetHigh();
 }
 
+volatile uint16_t tickCount  = 0;
+volatile bool     squareHigh = false;
+
+void SampleTick(void)
+{
+    tickCount++;
+    if (tickCount >= TOGGLE_TICKS)
+    {
+        tickCount = 0;
+        squareHigh = !squareHigh;
+        DAC_Write12(squareHigh ? 4095 : 0);
+    }
+}
 
 int main(void)
 {
     SYSTEM_Initialize();
     SPI1_Open(HOST_CONFIG);
 
+    Timer1_TimeoutCallbackRegister(SampleTick);
+    Timer1_Start();
+
     while (1)
     {
-        DAC_Write12(0);
-        DAC_Write12(4095);
+
     }
 }

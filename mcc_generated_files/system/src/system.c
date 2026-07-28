@@ -35,6 +35,7 @@
 #include "../clock.h"
 #include "../pins.h"
 #include "../dmt.h"
+#include "../../timer/sccp1.h"
 #include "../../spi_host/spi1.h"
 #include "../interrupt.h"
 
@@ -44,6 +45,7 @@ void SYSTEM_Initialize(void)
     CLOCK_Initialize();
     PINS_Initialize();
     DMT_Initialize();
+    SCCP1_Timer_Initialize();
     SPI1_Initialize();
     INTERRUPT_GlobalEnable();
     INTERRUPT_Initialize();

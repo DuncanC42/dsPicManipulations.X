@@ -24,6 +24,10 @@
           <itemPath>mcc_generated_files/system/reset_types.h</itemPath>
           <itemPath>mcc_generated_files/system/dmt.h</itemPath>
         </logicalFolder>
+        <logicalFolder name="timer" displayName="timer" projectFiles="true">
+          <itemPath>mcc_generated_files/timer/sccp1.h</itemPath>
+          <itemPath>mcc_generated_files/timer/timer_interface.h</itemPath>
+        </logicalFolder>
       </logicalFolder>
       <itemPath>font.h</itemPath>
       <itemPath>i2c_guard.h</itemPath>
@@ -61,6 +65,11 @@
             <itemPath>mcc_generated_files/system/src/reset.c</itemPath>
             <itemPath>mcc_generated_files/system/src/dmt_asm.s</itemPath>
             <itemPath>mcc_generated_files/system/src/dmt.c</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="timer" displayName="timer" projectFiles="true">
+          <logicalFolder name="src" displayName="src" projectFiles="true">
+            <itemPath>mcc_generated_files/timer/src/sccp1.c</itemPath>
           </logicalFolder>
         </logicalFolder>
       </logicalFolder>
