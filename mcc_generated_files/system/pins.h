@@ -45,6 +45,108 @@
 
 /**
  * @ingroup  pinsdriver
+ * @brief    Sets the RB14 GPIO Pin which has a custom name of DAC_CS to High
+ * @pre      The RB14 must be set as Output Pin             
+ * @param    none
+ * @return   none  
+ */
+#define DAC_CS_SetHigh()          (_LATB14 = 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Sets the RB14 GPIO Pin which has a custom name of DAC_CS to Low
+ * @pre      The RB14 must be set as Output Pin
+ * @param    none
+ * @return   none  
+ */
+#define DAC_CS_SetLow()           (_LATB14 = 0)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Toggles the RB14 GPIO Pin which has a custom name of DAC_CS
+ * @pre      The RB14 must be set as Output Pin
+ * @param    none
+ * @return   none  
+ */
+#define DAC_CS_Toggle()           (_LATB14 ^= 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Reads the value of the RB14 GPIO Pin which has a custom name of DAC_CS
+ * @param    none
+ * @return   none  
+ */
+#define DAC_CS_GetValue()         _RB14
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Configures the RB14 GPIO Pin which has a custom name of DAC_CS as Input
+ * @param    none
+ * @return   none  
+ */
+#define DAC_CS_SetDigitalInput()  (_TRISB14 = 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Configures the RB14 GPIO Pin which has a custom name of DAC_CS as Output
+ * @param    none
+ * @return   none  
+ */
+#define DAC_CS_SetDigitalOutput() (_TRISB14 = 0)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Sets the RC6 GPIO Pin which has a custom name of SPKR_EN to High
+ * @pre      The RC6 must be set as Output Pin             
+ * @param    none
+ * @return   none  
+ */
+#define SPKR_EN_SetHigh()          (_LATC6 = 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Sets the RC6 GPIO Pin which has a custom name of SPKR_EN to Low
+ * @pre      The RC6 must be set as Output Pin
+ * @param    none
+ * @return   none  
+ */
+#define SPKR_EN_SetLow()           (_LATC6 = 0)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Toggles the RC6 GPIO Pin which has a custom name of SPKR_EN
+ * @pre      The RC6 must be set as Output Pin
+ * @param    none
+ * @return   none  
+ */
+#define SPKR_EN_Toggle()           (_LATC6 ^= 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Reads the value of the RC6 GPIO Pin which has a custom name of SPKR_EN
+ * @param    none
+ * @return   none  
+ */
+#define SPKR_EN_GetValue()         _RC6
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Configures the RC6 GPIO Pin which has a custom name of SPKR_EN as Input
+ * @param    none
+ * @return   none  
+ */
+#define SPKR_EN_SetDigitalInput()  (_TRISC6 = 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Configures the RC6 GPIO Pin which has a custom name of SPKR_EN as Output
+ * @param    none
+ * @return   none  
+ */
+#define SPKR_EN_SetDigitalOutput() (_TRISC6 = 0)
+
+/**
+ * @ingroup  pinsdriver
  * @brief    Initializes the PINS module
  * @param    none
  * @return   none  

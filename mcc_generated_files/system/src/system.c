@@ -35,8 +35,7 @@
 #include "../clock.h"
 #include "../pins.h"
 #include "../dmt.h"
-#include "../../i2c_host/i2c1.h"
-#include "../../uart/uart1.h"
+#include "../../spi_host/spi1.h"
 #include "../interrupt.h"
 
 
@@ -45,8 +44,7 @@ void SYSTEM_Initialize(void)
     CLOCK_Initialize();
     PINS_Initialize();
     DMT_Initialize();
-    I2C1_Initialize();
-    UART1_Initialize();
+    SPI1_Initialize();
     INTERRUPT_GlobalEnable();
     INTERRUPT_Initialize();
 }

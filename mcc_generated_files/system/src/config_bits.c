@@ -57,7 +57,7 @@
 // FOSC
 #pragma config POSCMD = NONE    //Primary Oscillator Mode Select bits->Primary Oscillator disabled
 #pragma config OSCIOFNC = ON    //OSC2 Pin Function bit->OSC2 is general purpose digital I/O pin
-#pragma config FCKSM = CSDCMD    //Clock Switching Mode bits->Both Clock switching and Fail-safe Clock Monitor are disabled
+#pragma config FCKSM = CSECMD    //Clock Switching Mode bits->Clock switching is enabled,Fail-safe Clock Monitor is disabled
 #pragma config PLLKEN = ON    //PLL Lock Enable->PLL clock output will be disabled if LOCK is lost
 #pragma config XTCFG = G3    //XT Config->24-32 MHz crystals
 #pragma config XTBST = ENABLE    //XT Boost->Boost the kick-start
@@ -93,7 +93,7 @@
 #pragma config DMTDIS = OFF    //Dead Man Timer Disable bit->Dead Man Timer is Disabled and can be enabled by software
 
 // FDEVOPT
-#pragma config ALTI2C1 = ON    //Alternate I2C1 Pin bit->I2C1 mapped to ASDA1/ASCL1 pins
+#pragma config ALTI2C1 = OFF    //Alternate I2C1 Pin bit->I2C1 mapped to SDA1/SCL1 pins
 #pragma config SMB3EN = SMBUS3    //SM Bus Enable->SMBus 3.0 input levels
 #pragma config SPI2PIN = PPS    //SPI2 Pin Select bit->SPI2 uses I/O remap (PPS) pins
 

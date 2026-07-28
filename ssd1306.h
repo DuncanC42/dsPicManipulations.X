@@ -26,11 +26,11 @@
 #define SSD1306_H
 
 #include "mcc_generated_files/system/system.h"
-#include "mcc_generated_files/i2c_host/i2c1.h"
+//#include "mcc_generated_files/i2c_host/i2c1.h"
 #include <string.h>
 #include <xc.h> // include processor files - each processor file is guarded. 
 #include "font.h"
-#include "mcc_generated_files/i2c_host/i2c1.h"
+//#include "mcc_generated_files/i2c_host/i2c1.h"
 
 #ifdef	__cplusplus
 extern "C" {
