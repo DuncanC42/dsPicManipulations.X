@@ -45,6 +45,57 @@
 
 /**
  * @ingroup  pinsdriver
+ * @brief    Sets the RA2 GPIO Pin which has a custom name of SW_1 to High
+ * @pre      The RA2 must be set as Output Pin             
+ * @param    none
+ * @return   none  
+ */
+#define SW_1_SetHigh()          (_LATA2 = 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Sets the RA2 GPIO Pin which has a custom name of SW_1 to Low
+ * @pre      The RA2 must be set as Output Pin
+ * @param    none
+ * @return   none  
+ */
+#define SW_1_SetLow()           (_LATA2 = 0)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Toggles the RA2 GPIO Pin which has a custom name of SW_1
+ * @pre      The RA2 must be set as Output Pin
+ * @param    none
+ * @return   none  
+ */
+#define SW_1_Toggle()           (_LATA2 ^= 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Reads the value of the RA2 GPIO Pin which has a custom name of SW_1
+ * @param    none
+ * @return   none  
+ */
+#define SW_1_GetValue()         _RA2
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Configures the RA2 GPIO Pin which has a custom name of SW_1 as Input
+ * @param    none
+ * @return   none  
+ */
+#define SW_1_SetDigitalInput()  (_TRISA2 = 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Configures the RA2 GPIO Pin which has a custom name of SW_1 as Output
+ * @param    none
+ * @return   none  
+ */
+#define SW_1_SetDigitalOutput() (_TRISA2 = 0)
+
+/**
+ * @ingroup  pinsdriver
  * @brief    Sets the RB14 GPIO Pin which has a custom name of DAC_CS to High
  * @pre      The RB14 must be set as Output Pin             
  * @param    none
@@ -246,6 +297,108 @@
  * @return   none  
  */
 #define EE_HOLD_SetDigitalOutput() (_TRISC7 = 0)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Sets the RC13 GPIO Pin which has a custom name of SW_3 to High
+ * @pre      The RC13 must be set as Output Pin             
+ * @param    none
+ * @return   none  
+ */
+#define SW_3_SetHigh()          (_LATC13 = 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Sets the RC13 GPIO Pin which has a custom name of SW_3 to Low
+ * @pre      The RC13 must be set as Output Pin
+ * @param    none
+ * @return   none  
+ */
+#define SW_3_SetLow()           (_LATC13 = 0)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Toggles the RC13 GPIO Pin which has a custom name of SW_3
+ * @pre      The RC13 must be set as Output Pin
+ * @param    none
+ * @return   none  
+ */
+#define SW_3_Toggle()           (_LATC13 ^= 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Reads the value of the RC13 GPIO Pin which has a custom name of SW_3
+ * @param    none
+ * @return   none  
+ */
+#define SW_3_GetValue()         _RC13
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Configures the RC13 GPIO Pin which has a custom name of SW_3 as Input
+ * @param    none
+ * @return   none  
+ */
+#define SW_3_SetDigitalInput()  (_TRISC13 = 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Configures the RC13 GPIO Pin which has a custom name of SW_3 as Output
+ * @param    none
+ * @return   none  
+ */
+#define SW_3_SetDigitalOutput() (_TRISC13 = 0)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Sets the RD1 GPIO Pin which has a custom name of SW_2 to High
+ * @pre      The RD1 must be set as Output Pin             
+ * @param    none
+ * @return   none  
+ */
+#define SW_2_SetHigh()          (_LATD1 = 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Sets the RD1 GPIO Pin which has a custom name of SW_2 to Low
+ * @pre      The RD1 must be set as Output Pin
+ * @param    none
+ * @return   none  
+ */
+#define SW_2_SetLow()           (_LATD1 = 0)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Toggles the RD1 GPIO Pin which has a custom name of SW_2
+ * @pre      The RD1 must be set as Output Pin
+ * @param    none
+ * @return   none  
+ */
+#define SW_2_Toggle()           (_LATD1 ^= 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Reads the value of the RD1 GPIO Pin which has a custom name of SW_2
+ * @param    none
+ * @return   none  
+ */
+#define SW_2_GetValue()         _RD1
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Configures the RD1 GPIO Pin which has a custom name of SW_2 as Input
+ * @param    none
+ * @return   none  
+ */
+#define SW_2_SetDigitalInput()  (_TRISD1 = 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Configures the RD1 GPIO Pin which has a custom name of SW_2 as Output
+ * @param    none
+ * @return   none  
+ */
+#define SW_2_SetDigitalOutput() (_TRISD1 = 0)
 
 /**
  * @ingroup  pinsdriver
