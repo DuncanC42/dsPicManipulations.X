@@ -96,6 +96,57 @@
 
 /**
  * @ingroup  pinsdriver
+ * @brief    Sets the RC3 GPIO Pin which has a custom name of EE_CS to High
+ * @pre      The RC3 must be set as Output Pin             
+ * @param    none
+ * @return   none  
+ */
+#define EE_CS_SetHigh()          (_LATC3 = 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Sets the RC3 GPIO Pin which has a custom name of EE_CS to Low
+ * @pre      The RC3 must be set as Output Pin
+ * @param    none
+ * @return   none  
+ */
+#define EE_CS_SetLow()           (_LATC3 = 0)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Toggles the RC3 GPIO Pin which has a custom name of EE_CS
+ * @pre      The RC3 must be set as Output Pin
+ * @param    none
+ * @return   none  
+ */
+#define EE_CS_Toggle()           (_LATC3 ^= 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Reads the value of the RC3 GPIO Pin which has a custom name of EE_CS
+ * @param    none
+ * @return   none  
+ */
+#define EE_CS_GetValue()         _RC3
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Configures the RC3 GPIO Pin which has a custom name of EE_CS as Input
+ * @param    none
+ * @return   none  
+ */
+#define EE_CS_SetDigitalInput()  (_TRISC3 = 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Configures the RC3 GPIO Pin which has a custom name of EE_CS as Output
+ * @param    none
+ * @return   none  
+ */
+#define EE_CS_SetDigitalOutput() (_TRISC3 = 0)
+
+/**
+ * @ingroup  pinsdriver
  * @brief    Sets the RC6 GPIO Pin which has a custom name of SPKR_EN to High
  * @pre      The RC6 must be set as Output Pin             
  * @param    none
@@ -144,6 +195,57 @@
  * @return   none  
  */
 #define SPKR_EN_SetDigitalOutput() (_TRISC6 = 0)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Sets the RC7 GPIO Pin which has a custom name of EE_HOLD to High
+ * @pre      The RC7 must be set as Output Pin             
+ * @param    none
+ * @return   none  
+ */
+#define EE_HOLD_SetHigh()          (_LATC7 = 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Sets the RC7 GPIO Pin which has a custom name of EE_HOLD to Low
+ * @pre      The RC7 must be set as Output Pin
+ * @param    none
+ * @return   none  
+ */
+#define EE_HOLD_SetLow()           (_LATC7 = 0)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Toggles the RC7 GPIO Pin which has a custom name of EE_HOLD
+ * @pre      The RC7 must be set as Output Pin
+ * @param    none
+ * @return   none  
+ */
+#define EE_HOLD_Toggle()           (_LATC7 ^= 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Reads the value of the RC7 GPIO Pin which has a custom name of EE_HOLD
+ * @param    none
+ * @return   none  
+ */
+#define EE_HOLD_GetValue()         _RC7
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Configures the RC7 GPIO Pin which has a custom name of EE_HOLD as Input
+ * @param    none
+ * @return   none  
+ */
+#define EE_HOLD_SetDigitalInput()  (_TRISC7 = 1)
+
+/**
+ * @ingroup  pinsdriver
+ * @brief    Configures the RC7 GPIO Pin which has a custom name of EE_HOLD as Output
+ * @param    none
+ * @return   none  
+ */
+#define EE_HOLD_SetDigitalOutput() (_TRISC7 = 0)
 
 /**
  * @ingroup  pinsdriver

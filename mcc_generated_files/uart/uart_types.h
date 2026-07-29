@@ -1,14 +1,19 @@
 /**
- * MAIN Generated Driver Header File
+ * UART Generated Driver Types Header File
  * 
- * @file      system.c
- *            
- * @ingroup   systemdriver
- *            
- * @brief     This is the generated driver header file for the System driver
- *            
+ * @file      uart_types.h
+ * 
+ * @ingroup   uartdriver
+ * 
+ * @brief     This is the generated driver types header file for the UART driver
+ *
+ * @skipline @version   Firmware Driver Version 1.7.0
+ *
+ * @skipline @version   PLIB Version 1.5.4
+ *
  * @skipline  Device : dsPIC33CK64MC105
 */
+
 /*
 © [2026] Microchip Technology Inc. and its subsidiaries.
 
@@ -30,33 +35,23 @@
     THIS SOFTWARE.
 */
 
-#include "../system.h"
-#include "../system_types.h"
-#include "../clock.h"
-#include "../pins.h"
-#include "../../adc/adc1.h"
-#include "../dmt.h"
-#include "../../i2c_host/i2c1.h"
-#include "../../timer/sccp1.h"
-#include "../../spi_host/spi1.h"
-#include "../../uart/uart1.h"
-#include "../interrupt.h"
-
-
-void SYSTEM_Initialize(void)
-{
-    CLOCK_Initialize();
-    PINS_Initialize();
-    ADC1_Initialize();
-    DMT_Initialize();
-    I2C1_Initialize();
-    SCCP1_Timer_Initialize();
-    SPI1_Initialize();
-    UART1_Initialize();
-    INTERRUPT_GlobalEnable();
-    INTERRUPT_Initialize();
-}
+#ifndef UART_TYPES_H
+#define UART_TYPES_H
 
 /**
- End of File
+ @ingroup  uartdriver
+ @enum     UART_ERROR
+ @brief    This Enum can be used to know UART error type 
+           using UARTx_ErrorGet function e.g. \ref UART1_ErrorGet.
 */
+enum UART_ERROR_MASKS{
+    UART_ERROR_FRAMING_MASK = 0x1,
+    UART_ERROR_PARITY_MASK = 0x2,
+    UART_ERROR_RX_OVERRUN_MASK = 0x4,
+    UART_ERROR_TX_COLLISION_MASK = 0x8,
+    UART_ERROR_AUTOBAUD_OVERFLOW_MASK = 0x10,
+};
+
+#endif
+
+
