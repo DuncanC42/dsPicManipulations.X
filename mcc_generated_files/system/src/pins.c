@@ -58,17 +58,17 @@ void PINS_Initialize(void)
      ***************************************************************************/
     TRISA = 0x001FU;
     TRISB = 0xBFFFU;
-    TRISC = 0x3B36U;
+    TRISC = 0x3BBEU;
     TRISD = 0x2502U;
 
 
     /****************************************************************************
      * Setting the Weak Pull Up and Weak Pull Down SFR(s)
      ***************************************************************************/
-    CNPUA = 0x0004U;
+    CNPUA = 0x0000U;
     CNPUB = 0x0000U;
-    CNPUC = 0x2000U;
-    CNPUD = 0x0002U;
+    CNPUC = 0x0000U;
+    CNPUD = 0x0000U;
     CNPDA = 0x0000U;
     CNPDB = 0x0000U;
     CNPDC = 0x0000U;
@@ -87,9 +87,9 @@ void PINS_Initialize(void)
     /****************************************************************************
      * Setting the Analog/Digital Configuration SFR(s)
      ***************************************************************************/
-    ANSELA = 0x001BU;
+    ANSELA = 0x001FU;
     ANSELB = 0x039FU;
-    ANSELC = 0x0000U;
+    ANSELC = 0x0088U;
     ANSELD = 0x2400U;
 
     /****************************************************************************

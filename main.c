@@ -18,7 +18,6 @@
     EXCEED AMOUNT OF FEES, IF ANY, YOU PAID DIRECTLY TO MICROCHIP FOR 
     THIS SOFTWARE.
 */
-
 #include "mcc_generated_files/system/system.h"
 #include "mcc_generated_files/system/pins.h"
 #include "mcc_generated_files/spi_host/spi1.h"
@@ -26,123 +25,146 @@
 #include "mcc_generated_files/timer/sccp1.h"
 #include "mcc_generated_files/uart/uart1.h"
 #include <stdio.h>
+#include <string.h>
 #include <stdbool.h>
 #define FCY 100000000UL
 #include <libpic30.h>
 
-#define EE_CMD_WREN   0x06
-#define EE_CMD_WRITE  0x02
-#define EE_CMD_RDSR   0x05
+/* ---------- DAC (MCP4821) ---------- */
+#define DAC_CTRL_BITS 0x3000
 
-#define PAGE_SIZE        256
-#define RECORD_SECONDS   12
-#define SAMPLE_RATE      8000UL
-#define TOTAL_SAMPLES    (RECORD_SECONDS * SAMPLE_RATE)   /* 96000 */
-#define TOTAL_PAGES      (TOTAL_SAMPLES / PAGE_SIZE)       /* 375, exact */
+static void DAC_Write12(uint16_t value)
+{
+    uint16_t command  = DAC_CTRL_BITS | (value & 0x0FFF);
+    uint8_t  highByte = (uint8_t)(command >> 8);
+    uint8_t  lowByte  = (uint8_t)(command & 0xFF);
+    DAC_CS_SetLow();
+    while (!SPI1_IsTxReady()) {}
+    (void)SPI1_ByteExchange(highByte);
+    while (!SPI1_IsTxReady()) {}
+    (void)SPI1_ByteExchange(lowByte);
+    DAC_CS_SetHigh();
+}
 
-static uint8_t bufA[PAGE_SIZE], bufB[PAGE_SIZE];
-static uint8_t *fillBuf  = bufA;
-static uint8_t *flushBuf = bufB;
-static volatile uint16_t fillIndex = 0;
-static volatile bool     pageReady = false;
+/* ---------- Buffer audio, entierement en RAM (pas d'EEPROM) ---------- */
+#define SAMPLE_RATE   4000UL
+#define BUFFER_SIZE   7000      /* ~1.5 s a 4 kHz : 6000 octets, large marge sur les ~7 Ko libres */
+
+static uint8_t audioBuf[BUFFER_SIZE];
+static volatile uint16_t sampleIndex    = 0;
+static volatile uint16_t recordedLength = 0;
 static volatile bool     recording = false;
+static volatile bool     playing   = false;
 
-static void EE_WaitReady(void)
+void TimerTick(void)   /* appelee toutes les 250 us (1/4000 s) */
 {
-    uint8_t status;
-    do {
-        EE_CS_SetLow();
-        SPI1_ByteExchange(EE_CMD_RDSR);
-        status = SPI1_ByteExchange(0x00);
-        EE_CS_SetHigh();
-    } while (status & 0x01);
-}
-
-static void EE_WritePage(uint32_t addr, const uint8_t *data)
-{
-    EE_CS_SetLow();
-    SPI1_ByteExchange(EE_CMD_WREN);
-    EE_CS_SetHigh();
-
-    EE_CS_SetLow();
-    SPI1_ByteExchange(EE_CMD_WRITE);
-    SPI1_ByteExchange((uint8_t)(addr >> 16));
-    SPI1_ByteExchange((uint8_t)(addr >> 8));
-    SPI1_ByteExchange((uint8_t)addr);
-    for (uint16_t i = 0; i < PAGE_SIZE; i++) { SPI1_ByteExchange(data[i]); }
-    EE_CS_SetHigh();
-
-    EE_WaitReady();
-}
-
-static void UART_SendString(const char *s)
-{
-    while (*s != '\0')
+    if (recording)
     {
-        while (!UART1_IsTxReady()) { }
-        UART1_Write((uint8_t)*s++);
+        ADC1_SoftwareTriggerEnable();
+        uint16_t raw = ADC1_ConversionResultGet(MIC_OUT);
+        audioBuf[sampleIndex++] = (uint8_t)(raw >> 4);
+        if (sampleIndex >= BUFFER_SIZE) { recording = false; recordedLength = BUFFER_SIZE; }
+    }
+    else if (playing)
+    {
+        uint16_t value12 = (uint16_t)audioBuf[sampleIndex++] << 4;
+        DAC_Write12(value12);
+        if (sampleIndex >= recordedLength) { playing = false; }
     }
 }
 
-void SampleTick(void)   /* appelee par Timer1 toutes les 125 us */
+/* ---------- UART ---------- */
+static void UART_SendString(const char *s)
 {
-    if (!recording) { return; }
+    while (*s) { while (!UART1_IsTxReady()) {} UART1_Write((uint8_t)*s++); }
+}
 
-    ADC1_SoftwareTriggerEnable();
-    uint16_t raw = ADC1_ConversionResultGet(MIC_OUT);
-    fillBuf[fillIndex++] = (uint8_t)(raw >> 4);   /* 12 -> 8 bits, centre sur 128 */
+#define LINE_WIDTH 32
+static char    rxBuf[LINE_WIDTH + 1];
+static uint8_t rxIdx = 0;
 
-    if (fillIndex >= PAGE_SIZE)
+static void HandleCommand(const char *cmd)
+{
+    if (strcmp(cmd, "REC") == 0)
     {
-        fillIndex = 0;
-        uint8_t *tmp = fillBuf; fillBuf = flushBuf; flushBuf = tmp;
-        pageReady = true;
+        if (!recording && !playing)
+        {
+            sampleIndex = 0;
+            recording   = true;
+            UART_SendString("REC start\r\n");
+        }
+    }
+    else if (strcmp(cmd, "STOP") == 0)
+    {
+        if (recording)
+        {
+            recordedLength = sampleIndex;
+            recording      = false;
+            UART_SendString("REC stop\r\n");
+        }
+    }
+    else if (strcmp(cmd, "PLAY") == 0)
+    {
+        if (!recording && !playing && recordedLength > 0)
+        {
+            sampleIndex = 0;
+            playing     = true;
+            UART_SendString("PLAY start\r\n");
+        }
+    }
+    else
+    {
+        UART_SendString("? commandes: REC, STOP, PLAY\r\n");
     }
 }
 
 int main(void)
 {
-    uint8_t  prevMask    = 0;
-    uint16_t pagesWritten = 0;
+    bool wasRecording = false, wasPlaying = false;
 
     SYSTEM_Initialize();
+    SPKR_EN_SetHigh();
     ADC1_Enable();
     SPI1_Open(HOST_CONFIG);
-    Timer1_TimeoutCallbackRegister(SampleTick);
+    Timer1_TimeoutCallbackRegister(TimerTick);
     Timer1_Start();
 
-    UART_SendString("Pret. SW1 = start/stop (12s max).\r\n");
+    UART_SendString("Pret. Commandes : REC, STOP, PLAY.\r\n");
 
     while (1)
     {
-        uint8_t mask = 0;
-        if (!SW_1_GetValue()) { mask |= 0x01; }
-        uint8_t pressed = mask & (uint8_t)~prevMask;
-
-        if (pressed & 0x01)
+        if (UART1_IsRxReady())
         {
-            __delay_ms(20);                       /* anti-rebond : meme principe que le tout premier lab GPIO */
-            uint8_t confirm = 0;
-            if (!SW_1_GetValue()) { confirm |= 0x01; }
+            uint8_t c = UART1_Read();
+            while (!UART1_IsTxReady()) {}
+            UART1_Write(c);   /* echo local */
 
-            if (confirm & 0x01)                   /* toujours presse 20ms plus tard = vrai appui */
+            if (c == '\r' || c == '\n')
             {
-                if (!recording)
+                if (rxIdx > 0)
                 {
-                    recording    = true;
-                    pagesWritten = 0;
-                    fillIndex    = 0;
-                    UART_SendString("REC start\r\n");
+                    rxBuf[rxIdx] = '\0';
+                    UART_SendString("\r\n");
+                    HandleCommand(rxBuf);
+                    rxIdx = 0;
                 }
-                else
-                {
-                    recording = false;
-                    UART_SendString("REC stop (bouton)\r\n");
-                }
+            }
+            else if (rxIdx < LINE_WIDTH)
+            {
+                rxBuf[rxIdx++] = (char)c;
             }
         }
 
-        prevMask = mask;
-        __delay_ms(5);
+        if (!recording && wasRecording)
+        {
+            recordedLength = sampleIndex;
+            UART_SendString("REC stop (buffer plein)\r\n");
+        }
+        wasRecording = recording;
+
+        if (!playing && wasPlaying) { UART_SendString("PLAY stop (fin)\r\n"); }
+        wasPlaying = playing;
+
+        __delay_ms(2);
     }
 }
