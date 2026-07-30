@@ -56,12 +56,12 @@ void CLOCK_Initialize(void)
     }
     // RCDIV FRC/1; PLLPRE 1:1; DOZE 1:8; DOZEN disabled; ROI disabled; 
    CLKDIV = 0x3001U;
-    // PLLDIV 150; 
-   PLLFBD = 0x96U;
+    // PLLDIV 50; 
+   PLLFBD = 0x32U;
     // TUN Center frequency; 
    OSCTUN = 0x0U;
-    // PLLPOST 1:4; VCODIV FVCO/4; POST2DIV 1:1; 
-   PLLDIV = 0x41U;
+    // PLLPOST 1:1; VCODIV FVCO/4; POST2DIV 1:1; 
+   PLLDIV = 0x11U;
     // ROEN disabled; DIVSWEN disabled; ROSLP disabled; ROSEL ; OE disabled; ROSIDL disabled; 
    REFOCONL = 0x0U;
     // RODIV 0; 
@@ -88,13 +88,20 @@ void CLOCK_Initialize(void)
    PMD8 = 0x0U;
     /*  
        Input frequency                               :  8.00 MHz
-       Clock source                                  :  FRC Oscillator
-       System frequency (Fosc)                       :  8.00 MHz
-       Clock switching enabled                       :  false
+       Clock source                                  :  FRC Oscillator with PLL
+       System frequency (Fosc)                       :  200.00 MHz [(8.00 MHz / 1) * 50 / 1 / 2 = 200.00 MHz]
+       PLL VCO frequency (Fvco)                      :  400.00 MHz [(8.00 MHz / 1) * 50 = 400.00 MHz]
+       PLL output frequency (Fpllo)                  :  400.00 MHz [(8.00 MHz / 1) * 50 / 1 = 400.00 MHz]
+       PLL VCO divider frequency (Fvcodiv)           :  100.00 MHz [400.00 MHz / 4 = 100.00 MHz]
+       Clock switching enabled                       :  true
+       Clock source when device boots                :  FRC Oscillator
     */
-    // CF no clock failure; NOSC FRC; CLKLOCK unlocked; OSWEN Switch is Complete; 
-    __builtin_write_OSCCONH((uint8_t) (0x00));
-    __builtin_write_OSCCONL((uint8_t) (0x00));
+    // CF no clock failure; NOSC FRCPLL; CLKLOCK unlocked; OSWEN Switch is Complete; 
+    __builtin_write_OSCCONH((uint8_t) (0x01));
+    __builtin_write_OSCCONL((uint8_t) (0x01));
+    // Wait for Clock switch to occur
+    while (OSCCONbits.OSWEN != 0){}
+    while (OSCCONbits.LOCK != 1){}
 }
 
 

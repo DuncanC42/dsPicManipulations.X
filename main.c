@@ -20,136 +20,151 @@
 */
 #include "mcc_generated_files/system/system.h"
 #include "mcc_generated_files/system/pins.h"
-#include "mcc_generated_files/i2c_host/i2c1.h"
+#include "mcc_generated_files/spi_host/spi1.h"
+#include "mcc_generated_files/adc/adc1.h"
+#include "mcc_generated_files/timer/sccp1.h"
 #include "mcc_generated_files/uart/uart1.h"
-#include "i2c_guard.h"
-#include "ssd1306.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 #define FCY 100000000UL
 #include <libpic30.h>
 
-/*
-    Main application
-*/
-/* ---------- VCNL4200 proximity sensor ---------- */
-#define VCNL4200_ADDR     0x51
-#define VCNL4200_PS_CONF  0x03   /* command code: PS_CONF1 (low) + PS_CONF2 (high) */
-#define VCNL4200_PS_DATA  0x08   /* command code: proximity output, 16-bit, LSB first */
- 
-/* ---------- Timing ---------- */
-#define SEND_PERIOD_MS    250    /* how often the board pushes a reading out */
-#define LOOP_DELAY_MS     10     /* keeps RX polling responsive between sends */
- 
-/* ---------- OLED ---------- */
-#define LINE_WIDTH        20     /* line capacity in this font, ~20 chars */
- 
-static void VCNL4200_Init(void)
+/* ---------- DAC (MCP4821) ---------- */
+#define DAC_CTRL_BITS 0x3000
+
+static void DAC_Write12(uint16_t value)
 {
-    /* PS_CONF1 = 0x08 : PS_SD = 0 (sensor active), 8T integration time
-       PS_CONF2 = 0x00 : 12-bit output (0-4095), interrupt disabled (we poll) */
-    uint8_t cfg[3] = { VCNL4200_PS_CONF, 0x08, 0x00 };
-    if (!I2C_WaitIdle()) { return; }
-    I2C1_Write(VCNL4200_ADDR, cfg, sizeof(cfg));
-    (void)I2C_WaitIdle();
+    uint16_t command  = DAC_CTRL_BITS | (value & 0x0FFF);
+    uint8_t  highByte = (uint8_t)(command >> 8);
+    uint8_t  lowByte  = (uint8_t)(command & 0xFF);
+    DAC_CS_SetLow();
+    while (!SPI1_IsTxReady()) {}
+    (void)SPI1_ByteExchange(highByte);
+    while (!SPI1_IsTxReady()) {}
+    (void)SPI1_ByteExchange(lowByte);
+    DAC_CS_SetHigh();
 }
- 
-static uint16_t VCNL4200_ReadReg(uint8_t reg)
+
+/* ---------- Buffer audio, entierement en RAM (pas d'EEPROM) ---------- */
+#define SAMPLE_RATE   4000UL
+#define BUFFER_SIZE   7000      /* ~1.5 s a 4 kHz : 6000 octets, large marge sur les ~7 Ko libres */
+
+static uint8_t audioBuf[BUFFER_SIZE];
+static volatile uint16_t sampleIndex    = 0;
+static volatile uint16_t recordedLength = 0;
+static volatile bool     recording = false;
+static volatile bool     playing   = false;
+
+void TimerTick(void)   /* appelee toutes les 250 us (1/4000 s) */
 {
-    uint8_t rx[2] = { 0, 0 };
-    if (!I2C_WaitIdle()) { return 0; }
-    I2C1_WriteRead(VCNL4200_ADDR, &reg, 1, rx, 2);   /* repeated start is mandatory here */
-    (void)I2C_WaitIdle();
-    return (uint16_t)(rx[0] | ((uint16_t)rx[1] << 8));   /* LSB first */
+    if (recording)
+    {
+        ADC1_SoftwareTriggerEnable();
+        uint16_t raw = ADC1_ConversionResultGet(MIC_OUT);
+        audioBuf[sampleIndex++] = (uint8_t)(raw >> 4);
+        if (sampleIndex >= BUFFER_SIZE) { recording = false; recordedLength = BUFFER_SIZE; }
+    }
+    else if (playing)
+    {
+        uint16_t value12 = (uint16_t)audioBuf[sampleIndex++] << 4;
+        DAC_Write12(value12);
+        if (sampleIndex >= recordedLength) { playing = false; }
+    }
 }
- 
+
 /* ---------- UART ---------- */
 static void UART_SendString(const char *s)
 {
-    while (*s != '\0')
+    while (*s) { while (!UART1_IsTxReady()) {} UART1_Write((uint8_t)*s++); }
+}
+
+#define LINE_WIDTH 32
+static char    rxBuf[LINE_WIDTH + 1];
+static uint8_t rxIdx = 0;
+
+static void HandleCommand(const char *cmd)
+{
+    if (strcmp(cmd, "REC") == 0)
     {
-        while (!UART1_IsTxReady()) { }
-        UART1_Write((uint8_t)*s++);
+        if (!recording && !playing)
+        {
+            sampleIndex = 0;
+            recording   = true;
+            UART_SendString("REC start\r\n");
+        }
+    }
+    else if (strcmp(cmd, "STOP") == 0)
+    {
+        if (recording)
+        {
+            recordedLength = sampleIndex;
+            recording      = false;
+            UART_SendString("REC stop\r\n");
+        }
+    }
+    else if (strcmp(cmd, "PLAY") == 0)
+    {
+        if (!recording && !playing && recordedLength > 0)
+        {
+            sampleIndex = 0;
+            playing     = true;
+            UART_SendString("PLAY start\r\n");
+        }
+    }
+    else
+    {
+        UART_SendString("? commandes: REC, STOP, PLAY\r\n");
     }
 }
- 
-/* ---------- OLED ---------- */
-static void OLED_ShowLine(uint8_t page, const char *text, uint8_t len)
-{
-    char line[LINE_WIDTH + 1];
-    uint8_t i = 0;
- 
-    for (; i < len && i < LINE_WIDTH; i++) { line[i] = text[i]; }
-    for (; i < LINE_WIDTH; i++)            { line[i] = ' '; }   /* clear any longer previous line */
-    line[LINE_WIDTH] = '\0';
- 
-    SSD1306_SelectPage(page);
-    SSD1306_WriteString(line);
-}
- 
-/* ---------- Main ---------- */
+
 int main(void)
 {
-    char     rxBuffer[LINE_WIDTH + 1];
-    uint8_t  rxIdx      = 0;
-    uint16_t elapsedMs  = 0;
- 
+    bool wasRecording = false, wasPlaying = false;
+
     SYSTEM_Initialize();
-    SSD1306_Init();
-    SSD1306_Clear();
-    VCNL4200_Init();
- 
-    OLED_ShowLine(0, "PROX: ---", 9);
-    OLED_ShowLine(2, "MSG: (none yet)", 15);
-    UART_SendString("Board ready. Streaming proximity readings.\r\n");
-    UART_SendString("Type a line and press Enter to show it on screen.\r\n");
- 
+    SPKR_EN_SetHigh();
+    ADC1_Enable();
+    SPI1_Open(HOST_CONFIG);
+    Timer1_TimeoutCallbackRegister(TimerTick);
+    Timer1_Start();
+
+    UART_SendString("Pret. Commandes : REC, STOP, PLAY.\r\n");
+
     while (1)
     {
-        /* ---- direction 1: board -> PC, unsolicited, on a timer ---- */
-        elapsedMs += LOOP_DELAY_MS;
-        if (elapsedMs >= SEND_PERIOD_MS)
-        {
-            elapsedMs = 0;
-            uint16_t prox = VCNL4200_ReadReg(VCNL4200_PS_DATA);
- 
-            char msg[24];
-            sprintf(msg, "PROX: %4u\r\n", prox);
-            UART_SendString(msg);
- 
-            char oledMsg[16];
-            sprintf(oledMsg, "PROX: %4u", prox);
-            OLED_ShowLine(0, oledMsg, (uint8_t)strlen(oledMsg));
-        }
- 
-        /* ---- direction 2: PC -> board, whenever it happens to arrive ---- */
         if (UART1_IsRxReady())
         {
             uint8_t c = UART1_Read();
- 
-            while (!UART1_IsTxReady()) { }   /* local echo: screen has none by default */
-            UART1_Write(c);
- 
+            while (!UART1_IsTxReady()) {}
+            UART1_Write(c);   /* echo local */
+
             if (c == '\r' || c == '\n')
             {
                 if (rxIdx > 0)
                 {
-                    OLED_ShowLine(2, rxBuffer, rxIdx);
-                    UART_SendString("\r\n[shown on screen]\r\n");
+                    rxBuf[rxIdx] = '\0';
+                    UART_SendString("\r\n");
+                    HandleCommand(rxBuf);
                     rxIdx = 0;
                 }
             }
             else if (rxIdx < LINE_WIDTH)
             {
-                rxBuffer[rxIdx++] = (char)c;
-            }
-            else
-            {
-                UART_SendString("\r\n[line too long for the screen]\r\n");
-                rxIdx = 0;
+                rxBuf[rxIdx++] = (char)c;
             }
         }
- 
-        __delay_ms(LOOP_DELAY_MS);
+
+        if (!recording && wasRecording)
+        {
+            recordedLength = sampleIndex;
+            UART_SendString("REC stop (buffer plein)\r\n");
+        }
+        wasRecording = recording;
+
+        if (!playing && wasPlaying) { UART_SendString("PLAY stop (fin)\r\n"); }
+        wasPlaying = playing;
+
+        __delay_ms(2);
     }
 }

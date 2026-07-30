@@ -443,8 +443,8 @@ static inline void I2C1_InterruptEnable(void)
 void I2C1_Initialize(void)
 {
     // initialize the hardware
-    // I2CBRG 18; 
-    I2C1BRG = 0x12U;
+    // I2CBRG 492; 
+    I2C1BRG = 0x1ECU;
     // ACKEN disabled; STRICT disabled; STREN disabled; GCEN disabled; SMEN disabled; DISSLW disabled; I2CSIDL disabled; ACKDT Sends ACK; SCLREL Holds; RSEN disabled; A10M 7 Bit; PEN disabled; RCEN disabled; SEN disabled; I2CEN enabled; 
     I2C1CONL = 0x8200U;
     // BCL disabled; P disabled; S disabled; I2COV disabled; IWCOL disabled; 

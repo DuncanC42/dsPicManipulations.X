@@ -45,156 +45,105 @@
 
 /**
  * @ingroup  pinsdriver
- * @brief    Sets the RB7 GPIO Pin which has a custom name of LED_B to High
- * @pre      The RB7 must be set as Output Pin             
+ * @brief    Sets the RB14 GPIO Pin which has a custom name of DAC_CS to High
+ * @pre      The RB14 must be set as Output Pin             
  * @param    none
  * @return   none  
  */
-#define LED_B_SetHigh()          (_LATB7 = 1)
+#define DAC_CS_SetHigh()          (_LATB14 = 1)
 
 /**
  * @ingroup  pinsdriver
- * @brief    Sets the RB7 GPIO Pin which has a custom name of LED_B to Low
- * @pre      The RB7 must be set as Output Pin
+ * @brief    Sets the RB14 GPIO Pin which has a custom name of DAC_CS to Low
+ * @pre      The RB14 must be set as Output Pin
  * @param    none
  * @return   none  
  */
-#define LED_B_SetLow()           (_LATB7 = 0)
+#define DAC_CS_SetLow()           (_LATB14 = 0)
 
 /**
  * @ingroup  pinsdriver
- * @brief    Toggles the RB7 GPIO Pin which has a custom name of LED_B
- * @pre      The RB7 must be set as Output Pin
+ * @brief    Toggles the RB14 GPIO Pin which has a custom name of DAC_CS
+ * @pre      The RB14 must be set as Output Pin
  * @param    none
  * @return   none  
  */
-#define LED_B_Toggle()           (_LATB7 ^= 1)
+#define DAC_CS_Toggle()           (_LATB14 ^= 1)
 
 /**
  * @ingroup  pinsdriver
- * @brief    Reads the value of the RB7 GPIO Pin which has a custom name of LED_B
+ * @brief    Reads the value of the RB14 GPIO Pin which has a custom name of DAC_CS
  * @param    none
  * @return   none  
  */
-#define LED_B_GetValue()         _RB7
+#define DAC_CS_GetValue()         _RB14
 
 /**
  * @ingroup  pinsdriver
- * @brief    Configures the RB7 GPIO Pin which has a custom name of LED_B as Input
+ * @brief    Configures the RB14 GPIO Pin which has a custom name of DAC_CS as Input
  * @param    none
  * @return   none  
  */
-#define LED_B_SetDigitalInput()  (_TRISB7 = 1)
+#define DAC_CS_SetDigitalInput()  (_TRISB14 = 1)
 
 /**
  * @ingroup  pinsdriver
- * @brief    Configures the RB7 GPIO Pin which has a custom name of LED_B as Output
+ * @brief    Configures the RB14 GPIO Pin which has a custom name of DAC_CS as Output
  * @param    none
  * @return   none  
  */
-#define LED_B_SetDigitalOutput() (_TRISB7 = 0)
+#define DAC_CS_SetDigitalOutput() (_TRISB14 = 0)
 
 /**
  * @ingroup  pinsdriver
- * @brief    Sets the RB8 GPIO Pin which has a custom name of LED_G to High
- * @pre      The RB8 must be set as Output Pin             
+ * @brief    Sets the RC6 GPIO Pin which has a custom name of SPKR_EN to High
+ * @pre      The RC6 must be set as Output Pin             
  * @param    none
  * @return   none  
  */
-#define LED_G_SetHigh()          (_LATB8 = 1)
+#define SPKR_EN_SetHigh()          (_LATC6 = 1)
 
 /**
  * @ingroup  pinsdriver
- * @brief    Sets the RB8 GPIO Pin which has a custom name of LED_G to Low
- * @pre      The RB8 must be set as Output Pin
+ * @brief    Sets the RC6 GPIO Pin which has a custom name of SPKR_EN to Low
+ * @pre      The RC6 must be set as Output Pin
  * @param    none
  * @return   none  
  */
-#define LED_G_SetLow()           (_LATB8 = 0)
+#define SPKR_EN_SetLow()           (_LATC6 = 0)
 
 /**
  * @ingroup  pinsdriver
- * @brief    Toggles the RB8 GPIO Pin which has a custom name of LED_G
- * @pre      The RB8 must be set as Output Pin
+ * @brief    Toggles the RC6 GPIO Pin which has a custom name of SPKR_EN
+ * @pre      The RC6 must be set as Output Pin
  * @param    none
  * @return   none  
  */
-#define LED_G_Toggle()           (_LATB8 ^= 1)
+#define SPKR_EN_Toggle()           (_LATC6 ^= 1)
 
 /**
  * @ingroup  pinsdriver
- * @brief    Reads the value of the RB8 GPIO Pin which has a custom name of LED_G
+ * @brief    Reads the value of the RC6 GPIO Pin which has a custom name of SPKR_EN
  * @param    none
  * @return   none  
  */
-#define LED_G_GetValue()         _RB8
+#define SPKR_EN_GetValue()         _RC6
 
 /**
  * @ingroup  pinsdriver
- * @brief    Configures the RB8 GPIO Pin which has a custom name of LED_G as Input
+ * @brief    Configures the RC6 GPIO Pin which has a custom name of SPKR_EN as Input
  * @param    none
  * @return   none  
  */
-#define LED_G_SetDigitalInput()  (_TRISB8 = 1)
+#define SPKR_EN_SetDigitalInput()  (_TRISC6 = 1)
 
 /**
  * @ingroup  pinsdriver
- * @brief    Configures the RB8 GPIO Pin which has a custom name of LED_G as Output
+ * @brief    Configures the RC6 GPIO Pin which has a custom name of SPKR_EN as Output
  * @param    none
  * @return   none  
  */
-#define LED_G_SetDigitalOutput() (_TRISB8 = 0)
-
-/**
- * @ingroup  pinsdriver
- * @brief    Sets the RB9 GPIO Pin which has a custom name of LED_R to High
- * @pre      The RB9 must be set as Output Pin             
- * @param    none
- * @return   none  
- */
-#define LED_R_SetHigh()          (_LATB9 = 1)
-
-/**
- * @ingroup  pinsdriver
- * @brief    Sets the RB9 GPIO Pin which has a custom name of LED_R to Low
- * @pre      The RB9 must be set as Output Pin
- * @param    none
- * @return   none  
- */
-#define LED_R_SetLow()           (_LATB9 = 0)
-
-/**
- * @ingroup  pinsdriver
- * @brief    Toggles the RB9 GPIO Pin which has a custom name of LED_R
- * @pre      The RB9 must be set as Output Pin
- * @param    none
- * @return   none  
- */
-#define LED_R_Toggle()           (_LATB9 ^= 1)
-
-/**
- * @ingroup  pinsdriver
- * @brief    Reads the value of the RB9 GPIO Pin which has a custom name of LED_R
- * @param    none
- * @return   none  
- */
-#define LED_R_GetValue()         _RB9
-
-/**
- * @ingroup  pinsdriver
- * @brief    Configures the RB9 GPIO Pin which has a custom name of LED_R as Input
- * @param    none
- * @return   none  
- */
-#define LED_R_SetDigitalInput()  (_TRISB9 = 1)
-
-/**
- * @ingroup  pinsdriver
- * @brief    Configures the RB9 GPIO Pin which has a custom name of LED_R as Output
- * @param    none
- * @return   none  
- */
-#define LED_R_SetDigitalOutput() (_TRISB9 = 0)
+#define SPKR_EN_SetDigitalOutput() (_TRISC6 = 0)
 
 /**
  * @ingroup  pinsdriver
